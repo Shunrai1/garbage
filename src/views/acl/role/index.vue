@@ -1,70 +1,114 @@
 <template>
   <el-card style="height: 80px">
     <el-form :inline="true" class="form">
-      <el-form-item label="职位搜索">
-        <el-input placeholder="请你输入职位名称" v-model="keyword"></el-input>
+      <el-form-item label="地址:">
+        <el-input placeholder="请你输入搜索地址" v-model="keyword"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button
           type="primary"
-          @click="search"
+          size="default"
           :disabled="keyword ? false : true"
+          @click="search"
         >
           搜索
         </el-button>
-        <el-button type="primary" @click="reset">重置</el-button>
+        <el-button type="primary" size="default" @click="reset">重置</el-button>
       </el-form-item>
     </el-form>
   </el-card>
-  <el-card style="margin-top: 10px">
-    <el-button type="primary" @click="addRole" icon="Plus">添加职位</el-button>
-    <el-table style="margin: 10px 0" border :data="allRole">
-      <el-table-column label="#" type="index" align="center"></el-table-column>
-      <el-table-column label="ID" align="center" prop="id"></el-table-column>
+  <el-card style="margin: 10px 0px">
+    <el-button type="primary" size="default" @click="addUser">
+      添加垃圾投放点
+    </el-button>
+    <el-button
+      type="primary"
+      size="default"
+      :disabled="selectIdArr.length ? false : true"
+      @click="deleteSelectUser"
+    >
+      批量删除
+    </el-button>
+    <!-- table展示用户信息 -->
+    <el-table
+      @selection-change="selectChange"
+      style="margin: 10px 0px"
+      border
+      :data="userArr"
+    >
+      <el-table-column type="selection" align="center"></el-table-column>
+      <el-table-column label="#" align="center" type="index"></el-table-column>
       <el-table-column
-        label="职位名称"
+        label="地址"
         align="center"
-        prop="roleName"
+        prop="address"
         show-overflow-tooltip
       ></el-table-column>
       <el-table-column
-        label="创建时间"
+        label="描述"
         align="center"
-        prop="createTime"
+        prop="description"
         show-overflow-tooltip
       ></el-table-column>
       <el-table-column
-        label="更新时间"
+        label="经度"
         align="center"
-        prop="updateTime"
+        prop="longitude"
         show-overflow-tooltip
       ></el-table-column>
-
-      <el-table-column label="操作" width="300px" align="center">
-        <template v-slot="{ row }">
+      <el-table-column
+        label="纬度"
+        align="center"
+        prop="longitude"
+        show-overflow-tooltip
+      ></el-table-column>
+      <el-table-column
+        label="地区"
+        align="center"
+        prop="area"
+        show-overflow-tooltip
+      ></el-table-column>
+      <el-table-column
+        label="所属街道"
+        align="center"
+        prop="street"
+        show-overflow-tooltip
+      ></el-table-column>
+      <el-table-column
+        label="其他垃圾容量/L"
+        align="center"
+        prop="ogcapacity"
+        show-overflow-tooltip
+      ></el-table-column>
+      <el-table-column
+        label="厨余垃圾容量/L"
+        align="center"
+        prop="kwcapacity"
+        show-overflow-tooltip
+      ></el-table-column>
+      <el-table-column
+        label="标签"
+        align="center"
+        prop="label"
+        show-overflow-tooltip
+      ></el-table-column>
+      <el-table-column fixed="right" label="操作" width="300px" align="center">
+        <template #="{ row, $index }">
           <el-button
             type="primary"
-            icon="User"
             size="small"
-            @click="setPermission(row)"
-          >
-            分配权限
-          </el-button>
-          <el-button
-            type="primary"
             icon="Edit"
-            size="small"
-            @click="updateRole(row)"
+            @click="updateUser(row)"
           >
             编辑
           </el-button>
           <el-popconfirm
-            :title="`确定删除-${row.roleName}-吗?`"
+            :title="`你确定要删除${row.username}?`"
             width="260px"
-            @confirm="deleteRole(row.id)"
+            @confirm="deleteUser(row.id)"
           >
             <template #reference>
-              <el-button type="primary" icon="Delete" size="small">
+              <el-button type="primary" size="small" icon="Delete">
                 删除
               </el-button>
             </template>
@@ -72,6 +116,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 分页器 -->
     <el-pagination
       v-model:current-page="pageNo"
       v-model:page-size="pageSize"
@@ -79,214 +124,361 @@
       :background="true"
       layout="prev, pager, next, jumper,->,sizes,total"
       :total="total"
-      @current-change="getHasRole"
+      @current-change="getSite"
       @size-change="handler"
     />
   </el-card>
-
-  <el-dialog
-    v-model="dialogVisble"
-    :title="RoleParams.id ? '更新职位' : '添加职位'"
-  >
-    <el-form :model="RoleParams" :rules="rules" ref="formRef">
-      <el-form-item label="职位名称" prop="roleName">
-        <el-input placeholder="请输入职位名称" v-model="RoleParams.roleName" />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="dialogVisble = false">取消</el-button>
-        <el-button type="primary" @click="save">确定</el-button>
-      </span>
-    </template>
-  </el-dialog>
-  <!-- 抽屉结构 -->
+  <!-- 抽屉结构:完成添加新的用户账号|更新已有的账号信息 -->
   <el-drawer v-model="drawer">
+    <!-- 头部标题:将来文字内容应该动态的 -->
     <template #header>
-      <h4>分配菜单与按钮权限</h4>
+      <h4>{{ userParams.id ? '更新用户' : '添加用户' }}</h4>
     </template>
+    <!-- 身体部分 -->
     <template #default>
-      <el-tree
-        ref="tree"
-        :data="menuArr"
-        show-checkbox
-        node-key="id"
-        default-expand-all
-        :default-checked-keys="selectArr"
-        :props="defaultProps"
-      />
+      <el-form :model="userParams" :rules="rules" ref="formRef">
+        <el-form-item label="用户姓名" prop="username">
+          <el-input
+            placeholder="请您输入用户姓名"
+            v-model="userParams.username"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="用户昵称" prop="name">
+          <el-input
+            placeholder="请您输入用户昵称"
+            v-model="userParams.name"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="用户密码" prop="password" v-if="!userParams.id">
+          <el-input
+            placeholder="请您输入用户密码"
+            v-model="userParams.password"
+          ></el-input>
+        </el-form-item>
+      </el-form>
     </template>
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="drawer = false">取消</el-button>
+        <el-button @click="cancel">取消</el-button>
+        <el-button type="primary" @click="save">确定</el-button>
+      </div>
+    </template>
+  </el-drawer>
+  <!-- 抽屉结构:用户某一个已有的账号进行职位分配 -->
+  <el-drawer v-model="drawer1">
+    <template #header>
+      <h4>分配角色(职位)</h4>
+    </template>
+    <template #default>
+      <el-form>
+        <el-form-item label="用户姓名">
+          <el-input v-model="userParams.username" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="职位列表">
+          <el-checkbox
+            @change="handleCheckAllChange"
+            v-model="checkAll"
+            :indeterminate="isIndeterminate"
+          >
+            全选
+          </el-checkbox>
+          <!-- 显示职位的的复选框 -->
+          <el-checkbox-group
+            v-model="userRole"
+            @change="handleCheckedCitiesChange"
+          >
+            <el-checkbox
+              v-for="(role, index) in allRole"
+              :key="index"
+              :label="role"
+            >
+              {{ role.roleName }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+      </el-form>
+    </template>
+    <template #footer>
+      <div style="flex: auto">
+        <el-button @click="drawer1 = false">取消</el-button>
         <el-button type="primary" @click="confirmClick">确定</el-button>
       </div>
     </template>
   </el-drawer>
 </template>
-
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref } from 'vue'
-import {
-  reqAllRoleList,
-  reqAddOrUpdateRole,
-  reqAllMenuList,
-  reqSetPermission,
-  reqRemoveRole,
-} from '@/api/acl/role/index'
-import { MenuList, Records, RoleData } from '@/api/acl/role/type'
 import useLayOutSettingStore from '@/store/modules/setting'
+import { ref, onMounted, reactive, nextTick } from 'vue'
+import {
+  reqSelectUser,
+  reqRemoveUser,
+  reqUserInfo,
+  reqAddOrUpdateUser,
+  reqAllRole,
+  reqSetUserRole,
+} from '@/api/acl/user'
+import type {
+  SetRoleData,
+  UserResponseData,
+  Records,
+  User,
+  AllRoleResponseData,
+  AllRole,
+} from '@/api/acl/user/type'
 import { ElMessage } from 'element-plus'
-
-const settingStore = useLayOutSettingStore()
+import { reqAllSiteAPI } from '@/api/decision/gsite'
+//默认页码
 const pageNo = ref<number>(1)
+//一页展示几条数据
 const pageSize = ref<number>(5)
+//用户总个数
 const total = ref<number>(0)
-const keyword = ref<string>('')
-const allRole = ref<Records>([])
-const dialogVisble = ref<boolean>(false)
-const RoleParams = reactive<RoleData>({
-  roleName: '',
-})
-const formRef = ref()
+//存储全部用户的数组
+const userArr = ref<Records>([])
+//定义响应式数据控制抽屉的显示与隐藏
 const drawer = ref<boolean>(false)
-const selectArr = ref<[]>([])
-const menuArr = ref<MenuList>([])
-const tree = ref()
-const defaultProps = {
-  children: 'children',
-  label: 'name',
-}
-
-const validatorRoleName = (_rule: any, value: any, callBack: any) => {
-  if (value.trim().length >= 2) {
-    callBack()
-  } else {
-    callBack(new Error('职位名称必须大于等于两位'))
-  }
-}
-const rules = {
-  roleName: [{ required: true, trigger: 'blur', validator: validatorRoleName }],
-}
-
-const getHasRole = async (pager = 1) => {
+//控制分配角色抽屉显示与隐藏
+const drawer1 = ref<boolean>(false)
+//存储全部职位的数据
+const allRole = ref<AllRole>([])
+//当前用户已有的职位
+const userRole = ref<AllRole>([])
+//收集用户信息的响应式数据
+const userParams = reactive<User>({
+  username: '',
+  name: '',
+  password: '',
+})
+//准备一个数组存储批量删除的用户的ID
+const selectIdArr = ref<User[]>([])
+//获取form组件实例
+const formRef = ref<any>()
+//定义响应式数据:收集用户输入进来的关键字
+const keyword = ref<string>('')
+//获取模板setting仓库
+const settingStore = useLayOutSettingStore()
+// //组件挂载完毕
+onMounted(() => {
+  getSite()
+})
+// //获取全部已有的用户信息
+const getSite = async (pager = 1) => {
+  //收集当前页码
   pageNo.value = pager
-  const result = await reqAllRoleList(
+  const result: any = await reqAllSiteAPI(
     pageNo.value,
     pageSize.value,
     keyword.value,
   )
-  console.log(result)
   if (result.code == 200) {
-    allRole.value = result.data.records
     total.value = result.data.total
+    userArr.value = result.data.records
+    console.log(total.value)
   }
 }
+// //分页器下拉菜单的自定义事件的回调
 const handler = () => {
-  getHasRole()
+  getSite()
 }
+// //添加用户按钮的回调
+// const addUser = () => {
+//   //抽屉显示出来
+//   drawer.value = true
+//   //清空数据
+//   Object.assign(userParams, {
+//     id: 0,
+//     username: '',
+//     name: '',
+//     password: '',
+//   })
+//   //清除上一次的错误的提示信息
+//   nextTick(() => {
+//     formRef.value.clearValidate('username')
+//     formRef.value.clearValidate('name')
+//     formRef.value.clearValidate('password')
+//   })
+// }
+// //更新已有的用户按钮的回调
+// //row:即为已有用户的账号信息
+// const updateUser = (row: User) => {
+//   //抽屉显示出来
+//   drawer.value = true
+//   //存储收集已有的账号信息
+//   Object.assign(userParams, row)
+//   //清除上一次的错误的提示信息
+//   nextTick(() => {
+//     formRef.value.clearValidate('username')
+//     formRef.value.clearValidate('name')
+//   })
+// }
+// //保存按钮的回调
+// const save = async () => {
+//   //点击保存按钮的时候,务必需要保证表单全部复合条件在去发请求
+//   await formRef.value.validate()
+//   //保存按钮:添加新的用户|更新已有的用户账号信息
+//   const result: any = await reqAddOrUpdateUser(userParams)
+//   //添加或者更新成功
+//   if (result.code == 200) {
+//     //关闭抽屉
+//     drawer.value = false
+//     //提示消息
+//     ElMessage({
+//       type: 'success',
+//       message: userParams.id ? '更新成功' : '添加成功',
+//     })
+//     //获取最新的全部账号的信息
+//     // getHasUser(userParams.id ? pageNo.value : 1);
+//     //浏览器自动刷新一次
+//     window.location.reload()
+//   } else {
+//     //关闭抽屉
+//     drawer.value = false
+//     //提示消息
+//     ElMessage({
+//       type: 'error',
+//       message: userParams.id ? '更新失败' : '添加失败',
+//     })
+//   }
+// }
+// //取消按钮的回调
+// const cancel = () => {
+//   //关闭抽屉
+//   drawer.value = false
+// }
+// //校验用户名字回调函数
+// const validatorUsername = (rule: any, value: any, callBack: any) => {
+//   //用户名字|昵称,长度至少五位
+//   if (value.trim().length >= 5) {
+//     callBack()
+//   } else {
+//     callBack(new Error('用户名字至少五位'))
+//   }
+// }
+// //校验用户名字回调函数
+// const validatorname = (rule: any, value: any, callBack: any) => {
+//   //用户名字|昵称,长度至少五位
+//   if (value.trim().length >= 5) {
+//     callBack()
+//   } else {
+//     callBack(new Error('用户昵称至少五位'))
+//   }
+// }
+// const validatorPassword = (rule: any, value: any, callBack: any) => {
+//   //用户名字|昵称,长度至少五位
+//   if (value.trim().length >= 6) {
+//     callBack()
+//   } else {
+//     callBack(new Error('用户密码至少六位'))
+//   }
+// }
+// //表单校验的规则对象
+// const rules = {
+//   //用户名字
+//   username: [{ required: true, trigger: 'blur', validator: validatorUsername }],
+//   //用户昵称
+//   name: [{ required: true, trigger: 'blur', validator: validatorname }],
+//   //用户的密码
+//   password: [{ required: true, trigger: 'blur', validator: validatorPassword }],
+// }
+// //分配角色按钮的回调
+// const setRole = async (row: User) => {
+//   //存储已有的用户信息
+//   Object.assign(userParams, row)
+//   //获取全部的职位的数据与当前用户已有的职位的数据
+//   const result: AllRoleResponseData = await reqAllRole(userParams.id as number)
+//   if (result.code == 200) {
+//     //存储全部的职位
+//     allRole.value = result.data.allRolesList
+//     //存储当前用户已有的职位
+//     userRole.value = result.data.assignRoles
+//     //抽屉显示出来
+//     drawer1.value = true
+//   }
+// }
+
+// //收集顶部复选框全选数据
+// const checkAll = ref<boolean>(false)
+// //控制顶部全选复选框不确定的样式
+// const isIndeterminate = ref<boolean>(true)
+// //顶部的全部复选框的change事件
+// const handleCheckAllChange = (val: boolean) => {
+//   //val:true(全选)|false(没有全选)
+//   userRole.value = val ? allRole.value : []
+//   //不确定的样式(确定样式)
+//   isIndeterminate.value = false
+// }
+// //顶部全部的复选框的change事件
+// const handleCheckedCitiesChange = (value: string[]) => {
+//   //顶部复选框的勾选数据
+//   //代表:勾选上的项目个数与全部的职位个数相等，顶部的复选框勾选上
+//   checkAll.value = value.length === allRole.value.length
+//   //不确定的样式
+//   isIndeterminate.value = value.length !== allRole.value.length
+// }
+// //确定按钮的回调(分配职位)
+// const confirmClick = async () => {
+//   //收集参数
+//   const data: SetRoleData = {
+//     userId: userParams.id as number,
+//     roleIdList: userRole.value.map((item) => {
+//       return item.id as number
+//     }),
+//   }
+//   //分配用户的职位
+//   const result: any = await reqSetUserRole(data)
+//   if (result.code == 200) {
+//     //提示信息
+//     ElMessage({ type: 'success', message: '分配职务成功' })
+//     //关闭抽屉
+//     drawer1.value = false
+//     //获取更新完毕用户的信息,更新完毕留在当前页
+//     getHasUser(pageNo.value)
+//   }
+// }
+
+// //删除某一个用户
+// const deleteUser = async (userId: number) => {
+//   const result: any = await reqRemoveUser(userId)
+//   if (result.code == 200) {
+//     ElMessage({ type: 'success', message: '删除成功' })
+//     getHasUser(userArr.value.length > 1 ? pageNo.value : pageNo.value - 1)
+//   }
+// }
+// //table复选框勾选的时候会触发的事件
+// const selectChange = (value: any) => {
+//   selectIdArr.value = value
+// }
+// //批量删除按钮的回调
+// const deleteSelectUser = async () => {
+//   //整理批量删除的参数
+//   const idsList: any = selectIdArr.value.map((item) => {
+//     return item.id
+//   })
+//   //批量删除的请求
+//   const result: any = await reqSelectUser(idsList)
+//   if (result.code == 200) {
+//     ElMessage({ type: 'success', message: '删除成功' })
+//     getHasUser(userArr.value.length > 1 ? pageNo.value : pageNo.value - 1)
+//   }
+// }
+
+// //搜索按钮的回调
 const search = () => {
-  getHasRole()
+  //根据关键字获取相应的用户数据
+  getSite()
+  //清空关键字
+  keyword.value = ''
 }
+// //重置按钮
 const reset = () => {
   settingStore.refsh = !settingStore.refsh
 }
-const addRole = () => {
-  Object.assign(RoleParams, {
-    roleName: '',
-  })
-  RoleParams.id = undefined
-  nextTick(() => {
-    formRef.value.clearValidate('roleName')
-  })
-  dialogVisble.value = true
-}
-const updateRole = (row: RoleData) => {
-  Object.assign(RoleParams, row)
-  nextTick(() => {
-    formRef.value.clearValidate('roleName')
-  })
-  dialogVisble.value = true
-}
-const save = async () => {
-  await formRef.value.validate()
-  const result = await reqAddOrUpdateRole(RoleParams)
-  if (result.code == 200) {
-    ElMessage({
-      type: 'success',
-      message: RoleParams.id ? '更新成功' : '添加成功',
-    })
-    dialogVisble.value = false
-    getHasRole(RoleParams.id ? pageNo.value : 1)
-  } else {
-    ElMessage({
-      type: 'error',
-      message: RoleParams.id ? '更新失败' : '添加失败',
-    })
-  }
-}
-const setPermission = async (row: RoleData) => {
-  drawer.value = true
-  Object.assign(RoleParams, row)
-  const result = await reqAllMenuList(RoleParams.id!)
-  if (result.code == 200) {
-    menuArr.value = result.data
-    selectArr.value = filterSelectArr(menuArr.value, [])
-  }
-}
-const filterSelectArr = (allData: any, initArr: any) => {
-  allData.forEach((item: any) => {
-    if (item.select && (!item.children || item.children.length == 0)) {
-      initArr.push(item.id)
-    }
-    if (item.children && item.children.length > 0) {
-      filterSelectArr(item.children, initArr)
-    }
-  })
-  return initArr
-}
-const confirmClick = async () => {
-  const roleId = RoleParams.id
-  const arr = tree.value.getCheckedKeys()
-  const arr1 = tree.value.getHalfCheckedKeys()
-  const permissionId = arr.concat(arr1)
-  const result = await reqSetPermission(roleId!, permissionId)
-  if (result.code == 200) {
-    ElMessage({
-      type: 'success',
-      message: '分配权限成功',
-    })
-    drawer.value = false
-    setTimeout(() => {
-      window.location.reload()
-    }, 300)
-  } else {
-    ElMessage({
-      type: 'error',
-      message: '分配权限失败',
-    })
-  }
-}
-const deleteRole = async (id: number) => {
-  const result = await reqRemoveRole(id)
-  if (result.code == 200) {
-    ElMessage({
-      type: 'success',
-      message: '删除成功',
-    })
-    getHasRole(pageNo.value)
-  }
-}
-
-onMounted(() => {
-  getHasRole()
-})
 </script>
 
 <style scoped>
 .form {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 </style>

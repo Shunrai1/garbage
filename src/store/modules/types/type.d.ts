@@ -1,5 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import type { CategoryObj } from '@/api/product/attr/type'
+import { vector } from 'echarts'
+import { DepotList } from '@/api/decision/depot/type'
 //定义小仓库数据state类型
 export type UserState = {
   token: string | null
@@ -17,4 +19,16 @@ export interface CategoryState {
   c2Id: string | number
   c3Arr: CategoryObj[]
   c3Id: string | number
+}
+
+export interface gSiteState {
+  gSite: Vector
+  gStation: Vector
+  gProcess: Vector
+  depot: Vector
+  reservoirSign: null
+  popup: null
+  depots: DepotList
+  map: null
+  roadLayer
 }

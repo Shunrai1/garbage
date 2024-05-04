@@ -7,7 +7,7 @@ import { viteMockServe } from 'vite-plugin-mock'
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
   //获取各种环境下的对应变量
-  let env = loadEnv(mode, process.cwd())
+  const env = loadEnv(mode, process.cwd())
   return {
     plugins: [
       vue(),
@@ -40,8 +40,13 @@ export default defineConfig(({ command, mode }) => {
       proxy: {
         [env.VITE_APP_BASE_API]: {
           target: env.VITE_SERVE,
-          changeOrigin: true,
+          changeOrigin: false,
           rewrite: (path) => path.replace(/^\/api/, ''),
+        },
+        '/api2': {
+          target: 'http://localhost:8080', // 第二个跨域的URL
+          changeOrigin: false,
+          rewrite: (path) => path.replace(/^\/api2/, ''),
         },
       },
     },

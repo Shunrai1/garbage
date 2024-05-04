@@ -35,6 +35,28 @@ export const constantRoute = [
     ],
   },
   {
+    path: '/statistics',
+    component: () => import('@/layout/index.vue'),
+    name: 'Statistics',
+    meta: {
+      title: '',
+      hidden: false,
+      icon: '',
+    },
+    redirect: '/statistics1',
+    children: [
+      {
+        path: '/statistics1',
+        component: () => import('@/views/statistics/index.vue'),
+        name: 'st',
+        meta: {
+          title: '数据统计',
+          icon: 'DataAnalysis',
+        },
+      },
+    ],
+  },
+  {
     //404
     path: '/404',
     component: () => import('@/views/404/index.vue'),
@@ -45,26 +67,23 @@ export const constantRoute = [
       icon: 'DocumentDelete',
     },
   },
-  {
-    path: '/screen',
-    component: () => import('@/views/screen/index.vue'),
-    name: 'Screen',
-    meta: {
-      hidden: false,
-      title: '数据大屏',
-      icon: 'Platform',
-    },
-  },
-]
-
-export const asyncRoute = [
+  // {
+  //   path: '/screen',
+  //   component: () => import('@/views/screen/index.vue'),
+  //   name: 'Screen',
+  //   meta: {
+  //     hidden: false,
+  //     title: '数据大屏',
+  //     icon: 'Platform',
+  //   },
+  // },
   {
     path: '/acl',
     component: () => import('@/layout/index.vue'),
     name: 'Acl',
     meta: {
-      title: '权限管理',
-      icon: 'Lock',
+      title: '数据管理',
+      icon: 'Notebook',
     },
     redirect: '/acl/user',
     children: [
@@ -73,8 +92,7 @@ export const asyncRoute = [
         component: () => import('@/views/acl/user/index.vue'),
         name: 'User',
         meta: {
-          title: '用户管理',
-          icon: 'User',
+          title: '垃圾投放点',
         },
       },
       {
@@ -82,8 +100,7 @@ export const asyncRoute = [
         component: () => import('@/views/acl/role/index.vue'),
         name: 'Role',
         meta: {
-          title: '角色管理',
-          icon: 'UserFilled',
+          title: '其他垃圾中转站',
         },
       },
       {
@@ -91,8 +108,23 @@ export const asyncRoute = [
         component: () => import('@/views/acl/permission/index.vue'),
         name: 'Permission',
         meta: {
-          title: '菜单管理',
-          icon: 'Monitor',
+          title: '厨余垃圾处理站',
+        },
+      },
+      {
+        path: '/acl/depot',
+        component: () => import('@/views/acl/depot/index.vue'),
+        name: 'Depot',
+        meta: {
+          title: '车辆出发点',
+        },
+      },
+      {
+        path: '/acl/truck',
+        component: () => import('@/views/acl/truck/index.vue'),
+        name: 'Truck',
+        meta: {
+          title: '车辆信息',
         },
       },
     ],
@@ -102,49 +134,88 @@ export const asyncRoute = [
     component: () => import('@/layout/index.vue'),
     name: 'Product',
     meta: {
-      title: '辅助决策',
-      icon: 'Goods',
+      title: '运输路径规划',
+      icon: 'Van',
     },
     redirect: '/product/garbsiplan',
     children: [
       {
         path: '/product/garbsiplan',
-        component: () => import('@/views/product/trademark/index.vue'),
+        component: () => import('@/views/decision/garbsiplan/index.vue'),
         name: 'Trademark',
         meta: {
-          title: '垃圾投放点规划',
-          icon: 'ShoppingCartFull',
+          title: '其他垃圾',
         },
       },
       {
         path: '/product/attr',
-        component: () => import('@/views/product/attr/index.vue'),
+        component: () => import('@/views/decision/kirouteplan/index.vue'),
         name: 'Attr',
         meta: {
-          title: '属性管理',
-          icon: 'ChromeFilled',
-        },
-      },
-      {
-        path: '/product/spu',
-        component: () => import('@/views/product/spu/index.vue'),
-        name: 'Spu',
-        meta: {
-          title: 'SPU管理',
-          icon: 'Calendar',
-        },
-      },
-      {
-        path: '/product/sku',
-        component: () => import('@/views/product/sku/index.vue'),
-        name: 'Sku',
-        meta: {
-          title: 'SKU管理',
-          icon: 'Orange',
+          title: '厨余垃圾',
         },
       },
     ],
   },
+  {
+    path: '/sitedecison',
+    component: () => import('@/layout/index.vue'),
+    name: 'Sitedecison',
+    meta: {
+      title: '垃圾投放点规划',
+      icon: 'MapLocation',
+    },
+    redirect: '/sitedecison/site',
+    children: [
+      {
+        path: '/sitedecison/decision',
+        component: () => import('@/views/sitedecision/decision/index.vue'),
+        name: 'site',
+        meta: {
+          title: '任务规划',
+        },
+      },
+      {
+        path: '/sitedecison/site2',
+        component: () => import('@/views/sitedecision/chart/index.vue'),
+        name: 'site2',
+        meta: {
+          title: '解决方案详情',
+        },
+      },
+    ],
+  },
+]
+
+export const asyncRoute = [
+  // {
+  //   path: '/product',
+  //   component: () => import('@/layout/index.vue'),
+  //   name: 'Product',
+  //   meta: {
+  //     title: '运输路径规划',
+  //     icon: 'Van',
+  //   },
+  //   redirect: '/product/garbsiplan',
+  //   children: [
+  //     {
+  //       path: '/product/garbsiplan',
+  //       component: () => import('@/views/decision/garbsiplan/index.vue'),
+  //       name: 'Trademark',
+  //       meta: {
+  //         title: '其他垃圾',
+  //       },
+  //     },
+  //     {
+  //       path: '/product/attr',
+  //       component: () => import('@/views/decision/kirouteplan/index.vue'),
+  //       name: 'Attr',
+  //       meta: {
+  //         title: '厨余垃圾',
+  //       },
+  //     },
+  //   ],
+  // },
 ]
 
 export const anyRoute = {

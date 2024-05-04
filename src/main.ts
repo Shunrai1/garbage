@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-
+import mitt from 'mitt'
 import App from '@/App.vue'
 // 引入element-plus插件
 import ElementPlus from 'element-plus'
@@ -21,6 +21,9 @@ import { isHasButton } from './directive/has'
 
 // 获取应用实例对象
 const app = createApp(App)
+
+const bus = mitt()
+app.config.globalProperties.$bus = bus //相当于Vue2中的:Vue.prototype.$bus = bus
 app.use(router)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)

@@ -7,7 +7,7 @@ import useUserStore from '@/store/modules/user'
 const request = axios.create({
   //基础路径
   baseURL: import.meta.env.VITE_APP_BASE_API, //基础路径上会携带
-  timeout: 5000, //超时的时间设置
+  // timeout: 5000, //超时的时间设置
 })
 
 //第二步：request添加请求与响应拦截器
